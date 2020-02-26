@@ -25,7 +25,7 @@ var (
 
 // access point info
 const ssid = "xxx"
-const pass = "xxx"
+const pass = "yyy"
 
 // IP address of the MQTT broker to use. Replace with your own info.
 const server = "tcp://test.mosquitto.org:1883"
@@ -80,7 +80,7 @@ func main() {
 
 	a := apa102.New(spi0)
 	ledstrip = &a
-	leds = make([]color.RGBA, 30)
+	leds = make([]color.RGBA, 6)
 	// rg := false
 
 	// Configure SPI1 for 8Mhz, Mode 0, MSB First
