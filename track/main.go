@@ -31,7 +31,7 @@ const pass = "yyy"
 const server = "tcp://test.mosquitto.org:1883"
 
 //const server = "tcp://10.42.0.1:1883"
-//const server = "tcp://10.0.0.7:1883"
+//const server = "tcp://10.0.0.15:1883"
 
 //const server = "ssl://test.mosquitto.org:8883"
 
@@ -74,14 +74,12 @@ func main() {
 
 	// Configure SPI0 for 5K, Mode 0
 	spi0.Configure(machine.SPIConfig{
-		Frequency: 500000,
-		Mode:      0,
+		Mode: 0,
 	})
 
 	a := apa102.New(spi0)
 	ledstrip = &a
-	leds = make([]color.RGBA, 6)
-	// rg := false
+	leds = make([]color.RGBA, 150)
 
 	// Configure SPI1 for 8Mhz, Mode 0, MSB First
 	spi1.Configure(machine.SPIConfig{
@@ -105,6 +103,19 @@ func main() {
 		failMessage(token.Error().Error())
 	}
 
+	// subscribe
+	token := cl.Subscribe("tinygorace/racer/1/racing", 0, handleR1Sub)
+	token.Wait()
+	if token.Error() != nil {
+		failMessage(token.Error().Error())
+	}
+
+	token = cl.Subscribe("tinygorace/racer/2/racing", 0, handleR2Sub)
+	token.Wait()
+	if token.Error() != nil {
+		failMessage(token.Error().Error())
+	}
+
 	go handleLED()
 
 	for {
@@ -114,7 +125,7 @@ func main() {
 			println(token.Error().Error())
 		}
 
-		time.Sleep(time.Millisecond * 100)
+		time.Sleep(time.Millisecond * 1000)
 	}
 }
 
@@ -162,6 +173,16 @@ func handleDisplay() {
 
 		time.Sleep(100 * time.Millisecond)
 	}
+}
+
+func handleR1Sub(client mqtt.Client, msg mqtt.Message) {
+	r, _ := strconv.Atoi(string(msg.Payload()))
+	racer1Pos = uint16(r)
+}
+
+func handleR2Sub(client mqtt.Client, msg mqtt.Message) {
+	r, _ := strconv.Atoi(string(msg.Payload()))
+	racer2Pos = uint16(r)
 }
 
 // connect to access point
