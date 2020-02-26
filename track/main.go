@@ -108,13 +108,13 @@ func main() {
 	go handleLED()
 
 	for {
-		token := cl.Publish(topicRx, 0, false, "hello")
+		token := cl.Publish(topicTx, 0, false, []byte("hello"))
 		token.Wait()
 		if token.Error() != nil {
 			println(token.Error().Error())
 		}
 
-		time.Sleep(time.Millisecond * 1000)
+		time.Sleep(time.Millisecond * 100)
 	}
 }
 
