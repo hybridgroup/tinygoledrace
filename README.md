@@ -4,6 +4,10 @@ This is basically a version of https://openledrace.net/ written in Go using Ti
 
 The racer controllers will be foam mats that have a force sensitive resistor inside them. Each player will run or jump in place on top of their mat to make their racer move.
 
+## How it works
+
+![arch](./images/arch-diagram.png)
+
 ## Hardware
 
 ### Hub
