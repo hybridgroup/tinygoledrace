@@ -1,0 +1,19 @@
+graph TB
+subgraph "Hub"
+M[Mosquitto] --> |MQTT|G[Gobot]
+G --> Sounds
+end
+subgraph "Racer 1"
+MCU1-->|SPI|D1[TFT Display]
+MCU1 --> |MQTT|M
+LR1-->|AIO|MCU1[PyPortal]
+end
+subgraph "Racer 2"
+MCU2-->|SPI|D2[TFT Display]
+MCU2 --> |MQTT|M
+LR2-->|AIO|MCU2[PyPortal]
+end
+subgraph "Track"
+MCU3[Arduino Nano33] --> |SPI|LEDs
+MCU3 --> |MQTT|M
+end
