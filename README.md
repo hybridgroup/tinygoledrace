@@ -32,9 +32,9 @@ Button to start the game?
 
 ### Hub
 
-`tinygorace/hub/{hubid}/ready`
+`tinygorace/hub/{hubid}/available`
 
-Published by the hub when it is online but not racing
+Published by the hub when it is available for a race
 
 `tinygorace/race/{raceid}/starting`
 
@@ -52,10 +52,6 @@ published by the hub when there is a race counting down to start
 `tinygorace/race/{raceid}/start`
 
 published by the hub when the race starts
-
-`tinygorace/race/{raceid}/racing`
-
-published by the hub while the race is going on. used by racers to display heads up display info, and by the track
 
 `tinygorace/race/{raceid}/end`
 
@@ -76,22 +72,16 @@ published by the racer when it is online but not racing
 data: {raceid}
 published by the racer when it is ready to join a race
 
-`tinygorace/racer/{racerid}/driving`
+`tinygorace/race/{raceid}/racer/{racerid}/racing`
 
 data: {about the racer's movement}
-published by the racer when it is driving in a race
+published by the racer when it is racing in a race
 
 Subscribes to:
 
-`tinygorace/race/{raceid}/racing`
+`tinygorace/hub/{hubid}/available`
 
-### Track
-
-`tinygorace/track/{trackid}/ready`
-
-published by the track when it is online but not racing
-
-Subscribes to:
+`tinygorace/race/{raceid}/starting`
 
 `tinygorace/race/{raceid}/countdown`
 
@@ -100,3 +90,25 @@ Subscribes to:
 `tinygorace/race/{raceid}/racing`
 
 `tinygorace/race/{raceid}/end`
+
+### Track
+
+`tinygorace/track/{trackid}/ready`
+
+published by the track when it is ready for a race
+
+Subscribes to:
+
+`tinygorace/hub/{hubid}/available`
+
+`tinygorace/race/{raceid}/starting`
+
+`tinygorace/race/{raceid}/countdown`
+
+`tinygorace/race/{raceid}/start`
+
+`tinygorace/race/{raceid}/end`
+
+and
+
+`tinygorace/race/{raceid}/racer/{racerid}/racing`

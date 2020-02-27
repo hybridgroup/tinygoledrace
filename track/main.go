@@ -16,9 +16,12 @@ import (
 	freemono "./fonts"
 	"tinygo.org/x/drivers/ssd1306"
 	"tinygo.org/x/drivers/wifinina"
+
+	"../game"
 )
 
 var (
+	status    = game.Looking
 	racer1Pos uint16
 	racer2Pos uint16
 )
@@ -28,10 +31,10 @@ const ssid = "xxx"
 const pass = "yyy"
 
 // IP address of the MQTT broker to use. Replace with your own info.
-const server = "tcp://test.mosquitto.org:1883"
+//const server = "tcp://test.mosquitto.org:1883"
 
 //const server = "tcp://10.42.0.1:1883"
-//const server = "tcp://10.0.0.15:1883"
+const server = "tcp://5.196.95.208:1883"
 
 //const server = "ssl://test.mosquitto.org:8883"
 
@@ -58,7 +61,7 @@ var (
 
 	ledstrip *apa102.Device
 	leds     []color.RGBA
-	rg       bool
+	rb       bool
 )
 
 func main() {
@@ -104,17 +107,7 @@ func main() {
 	}
 
 	// subscribe
-	token := cl.Subscribe("tinygorace/racer/1/racing", 0, handleR1Sub)
-	token.Wait()
-	if token.Error() != nil {
-		failMessage(token.Error().Error())
-	}
-
-	token = cl.Subscribe("tinygorace/racer/2/racing", 0, handleR2Sub)
-	token.Wait()
-	if token.Error() != nil {
-		failMessage(token.Error().Error())
-	}
+	setupSubs()
 
 	go handleLED()
 
@@ -131,14 +124,29 @@ func main() {
 
 func handleLED() {
 	for {
-		rg = !rg
-		for i := range leds {
-			rg = !rg
-			if rg {
-				leds[i] = color.RGBA{R: 0xff, G: 0x00, B: 0x00, A: 0x77}
-			} else {
-				leds[i] = color.RGBA{R: 0x00, G: 0xff, B: 0x00, A: 0x77}
+		switch status {
+		case game.Available:
+			// red/blue color effect
+			rb = !rb
+			for i := range leds {
+				rb = !rb
+				if rb {
+					leds[i] = color.RGBA{R: 0xff, G: 0x00, B: 0x00, A: 0x77}
+				} else {
+					leds[i] = color.RGBA{R: 0x00, G: 0x00, B: 0xff, A: 0x77}
+				}
 			}
+		case game.Ready:
+			// clear the track
+			for i := range leds {
+				leds[i] = color.RGBA{R: 0x00, G: 0x00, B: 0x00, A: 0x77}
+			}
+
+		case game.Starting:
+			// excite visual
+		case game.Countdown, game.Racing, game.Over:
+			// draw racers
+
 		}
 
 		ledstrip.WriteColors(leds)
@@ -175,14 +183,32 @@ func handleDisplay() {
 	}
 }
 
-func handleR1Sub(client mqtt.Client, msg mqtt.Message) {
-	r, _ := strconv.Atoi(string(msg.Payload()))
-	racer1Pos = uint16(r)
+func setupSubs() {
+	if token := cl.Subscribe(game.TopicRaceAvailable, 0, handleRaceAvailable); token.Wait() && token.Error() != nil {
+		failMessage(token.Error().Error())
+	}
+
+	if token := cl.Subscribe(game.TopicRaceStarting, 0, handleRaceStarting); token.Wait() && token.Error() != nil {
+		failMessage(token.Error().Error())
+	}
+
+	if token := cl.Subscribe(game.TopicRacerRacing, 0, handleRacing); token.Wait() && token.Error() != nil {
+		failMessage(token.Error().Error())
+	}
 }
 
-func handleR2Sub(client mqtt.Client, msg mqtt.Message) {
+func handleRaceAvailable(client mqtt.Client, msg mqtt.Message) {
+	status = game.Available
+}
+
+func handleRaceStarting(client mqtt.Client, msg mqtt.Message) {
+	status = game.Starting
+}
+
+func handleRacing(client mqtt.Client, msg mqtt.Message) {
+	// TODO: use msg.Topic() to determine which racer
 	r, _ := strconv.Atoi(string(msg.Payload()))
-	racer2Pos = uint16(r)
+	racer1Pos = uint16(r)
 }
 
 // connect to access point
