@@ -17,6 +17,7 @@ import (
 	"tinygo.org/x/drivers/ssd1306"
 	"tinygo.org/x/drivers/wifinina"
 
+	"../connect"
 	"../game"
 )
 
@@ -25,18 +26,6 @@ var (
 	racer1Pos uint16
 	racer2Pos uint16
 )
-
-// access point info
-const ssid = "xxx"
-const pass = "yyy"
-
-// IP address of the MQTT broker to use. Replace with your own info.
-//const server = "tcp://test.mosquitto.org:1883"
-
-//const server = "tcp://10.42.0.1:1883"
-const server = "tcp://5.196.95.208:1883"
-
-//const server = "ssl://test.mosquitto.org:8883"
 
 // change these to connect to a different UART or pins for the ESP8266/ESP32
 var (
@@ -100,7 +89,7 @@ func main() {
 	opts := mqtt.NewClientOptions()
 	opts.AddBroker(server).SetClientID("track-" + randomString(10))
 
-	println("Connecting to MQTT broker at", server)
+	println("Connecting to MQTT broker at", connect.Broker)
 	cl = mqtt.NewClient(opts)
 	if token := cl.Connect(); token.Wait() && token.Error() != nil {
 		failMessage(token.Error().Error())
@@ -214,8 +203,8 @@ func handleRacing(client mqtt.Client, msg mqtt.Message) {
 // connect to access point
 func connectToAP() {
 	time.Sleep(2 * time.Second)
-	println("Connecting to " + ssid)
-	adaptor.SetPassphrase(ssid, pass)
+	println("Connecting to " + connect.SSID)
+	adaptor.SetPassphrase(connect.SSID, connect.PASS)
 	for st, _ := adaptor.GetConnectionStatus(); st != wifinina.StatusConnected; {
 		println("Connection status: " + st.String())
 		time.Sleep(1 * time.Second)

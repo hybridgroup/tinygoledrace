@@ -12,13 +12,9 @@ import (
 	"tinygo.org/x/tinyfont/proggy"
 
 	"tinygo.org/x/drivers/net/mqtt"
+
+	"../connect"
 )
-
-const ssid = "YOURSSID"
-const pass = "YOURPASS"
-
-//const server = "ssl://test.mosquitto.org:8883"
-const server = "tcp://test.mosquitto.org:1883"
 
 var (
 	/*uart = machine.UART1
@@ -92,9 +88,9 @@ func configureWifi(player int) {
 	connectToAP()
 
 	opts := mqtt.NewClientOptions()
-	opts.AddBroker(server).SetClientID("tinygo-racer-" + strconv.Itoa(player))
+	opts.AddBroker(connect.Broker).SetClientID("tinygo-racer-" + strconv.Itoa(player))
 
-	println("Connecting to MQTT broker at", server)
+	println("Connecting to MQTT broker at", connect.Broker)
 	cl = mqtt.NewClient(opts)
 	if token := cl.Connect(); token.Wait() && token.Error() != nil {
 		failMessage(token.Error().Error())
@@ -120,9 +116,9 @@ func configureWifi(player int) {
 // connect to access point
 func connectToAP() {
 	time.Sleep(2 * time.Second)
-	tinyfont.WriteLine(display, &proggy.TinySZ8pt7b, 0, 30, []byte("Connecting to '"+ssid+"'"), colors[WHITE])
-	println("Connecting to " + ssid)
-	adaptor.SetPassphrase(ssid, pass)
+	tinyfont.WriteLine(display, &proggy.TinySZ8pt7b, 0, 30, []byte("Connecting to '"+connect.SSID+"'"), colors[WHITE])
+	println("Connecting to " + connect.SSID)
+	adaptor.SetPassphrase(connect.SSID, connect.PASS)
 	for st, _ := adaptor.GetConnectionStatus(); st != wifinina.StatusConnected; {
 		display.FillRectangle(0, 31, 320, 12, colors[BACKGROUND])
 		tinyfont.WriteLine(display, &proggy.TinySZ8pt7b, 0, 40, []byte(st.String()), colors[PLAYER1])
