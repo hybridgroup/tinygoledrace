@@ -32,64 +32,58 @@ Button to start the game?
 
 ### Hub
 
-`tinygorace/hub/{hubid}/available`
+`tinygorace/hub/available`
 
 Published by the hub when it is available for a race
 
-`tinygorace/race/{raceid}/starting`
+`tinygorace/race/starting`
 
-Published by the hub when there is a race getting ready to start
+Published by the hub when there is a race getting ready to start. 
+Racers should join the race by publishing `tinygorace/racer/{racerid}/join` message.
 
-`tinygorace/race/{raceid}/racer/{racerid}/joined`
-
-Published by the hub for each racer when it is ready to join a race
-
-`tinygorace/race/{raceid}/countdown`
+`tinygorace/race/countdown`
 
 data: {count}
 published by the hub when there is a race counting down to start
 
-`tinygorace/race/{raceid}/start`
+`tinygorace/race/start`
 
 published by the hub when the race starts
 
-`tinygorace/race/{raceid}/end`
+`tinygorace/race/over`
 
 published by the hub when the race ends
 
-`tinygorace/race/{raceid}/racer/{racerid}/winner`
+`tinygorace/race/winner`
 
 published by hub when the race ends to signify the race winner
 
+`tinygorace/racer/{racerid}/joined`
+
+Published by the hub for each racer when it has successfully joined a race
+
+`tinygorace/racer/{racerid}/position`
+
+published by hub to signify the position of a racer on the track
+
 ### Racer
 
-`tinygorace/racer/{racerid}/ready`
+`tinygorace/racer/{racerid}/available`
 
-published by the racer when it is online but not racing
+published by the racer when it is available to race
 
 `tinygorace/racer/{racerid}/join`
 
-data: {raceid}
 published by the racer when it is ready to join a race
 
-`tinygorace/race/{raceid}/racer/{racerid}/racing`
+`tinygorace/racer/{racerid}/ready`
+
+published by the racer when it is ready to race
+
+`tinygorace/racer/{racerid}/racing`
 
 data: {about the racer's movement}
 published by the racer when it is racing in a race
-
-Subscribes to:
-
-`tinygorace/hub/{hubid}/available`
-
-`tinygorace/race/{raceid}/starting`
-
-`tinygorace/race/{raceid}/countdown`
-
-`tinygorace/race/{raceid}/start`
-
-`tinygorace/race/{raceid}/racing`
-
-`tinygorace/race/{raceid}/end`
 
 ### Track
 
@@ -97,18 +91,3 @@ Subscribes to:
 
 published by the track when it is ready for a race
 
-Subscribes to:
-
-`tinygorace/hub/{hubid}/available`
-
-`tinygorace/race/{raceid}/starting`
-
-`tinygorace/race/{raceid}/countdown`
-
-`tinygorace/race/{raceid}/start`
-
-`tinygorace/race/{raceid}/end`
-
-and
-
-`tinygorace/race/{raceid}/racer/{racerid}/racing`
