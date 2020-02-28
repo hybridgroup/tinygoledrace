@@ -79,6 +79,11 @@ func racerJoin(msg mqtt.Message) {
 		// something wrong
 		return
 	}
+
+	// notify they are in the race
+	racerID := el[2]
+	topic := strings.Replace(game.TopicRacerJoin, "+", racerID, 1)
+	broker.Publish(topic, []byte{})
 }
 
 func handleRacing(msg mqtt.Message) {
@@ -93,9 +98,10 @@ func handleRacing(msg mqtt.Message) {
 		// something wrong
 		return
 	}
+	racerID := el[2]
 
 	r, _ := strconv.Atoi(string(msg.Payload()))
-	switch el[2] {
+	switch racerID {
 	case "1":
 		racer1.Pos += r
 		if racer1.Pos > game.TrackLength {
