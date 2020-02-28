@@ -13,7 +13,7 @@ import (
 	"tinygo.org/x/drivers/net/mqtt"
 	"tinygo.org/x/tinyfont"
 
-	// comes from "github.com/conejoninja/tinyfont/freemono"
+	// comes from "tinygo.org/x/tinyfont/freemono"
 	freemono "./fonts"
 	"tinygo.org/x/drivers/ssd1306"
 	"tinygo.org/x/drivers/wifinina"
@@ -51,7 +51,7 @@ var (
 
 	ledstrip *apa102.Device
 	leds     []color.RGBA
-	rb       bool
+	ledIndex uint8
 )
 
 func main() {
@@ -116,16 +116,10 @@ func handleLED() {
 	for {
 		switch status {
 		case game.Looking, game.Available:
-			// red/blue color effect
-			rb = !rb
 			for i := range leds {
-				rb = !rb
-				if rb {
-					leds[i] = color.RGBA{R: 0xff, G: 0x00, B: 0x00, A: 0x77}
-				} else {
-					leds[i] = color.RGBA{R: 0x00, G: 0x00, B: 0xff, A: 0x77}
-				}
+				leds[i] = getRainbowRGB(uint8((i*256)/game.TrackLength) + ledIndex)
 			}
+			ledIndex++
 		case game.Ready:
 			clearTrack()
 
@@ -290,4 +284,15 @@ func failMessage(msg string) {
 		println(msg)
 		time.Sleep(1 * time.Second)
 	}
+}
+
+func getRainbowRGB(i uint8) color.RGBA {
+	if i < 85 {
+		return color.RGBA{i * 3, 255 - i*3, 0, 255}
+	} else if i < 170 {
+		i -= 85
+		return color.RGBA{255 - i*3, 0, i * 3, 255}
+	}
+	i -= 170
+	return color.RGBA{0, i * 3, 255 - i*3, 255}
 }
