@@ -84,10 +84,32 @@ func main() {
 	stepL(true)
 	stepR(true)
 
+	tapped := false
+	lr := false
 	for {
 		// CODE THAT READ SENSOR AND SEND MQTT MSG
-		Send([]byte("1"))
-		time.Sleep(100 * time.Millisecond)
+		//Send([]byte("1"))
+
+		// TAP CONTROL
+		point := resistiveTouch.ReadTouchPoint()
+		if point.Z>>6 > 100 {
+			if !tapped {
+				tapped = true
+				// TAP event
+				Send([]byte("1"))
+				lr = !lr
+				if lr {
+					stepL(false)
+					stepR(true)
+				} else {
+					stepL(true)
+					stepR(false)
+				}
+			}
+		} else {
+			tapped = false
+		}
+		time.Sleep(10*time.Millisecond)
 	}
 
 }

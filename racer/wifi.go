@@ -17,9 +17,6 @@ import (
 )
 
 var (
-	/*uart = machine.UART1
-	tx   = machine.UART_TX_PIN
-	rx   = machine.UART_RX_PIN  */
 	spi = machine.NINA_SPI
 
 	// this is the ESP chip that has the WIFININA firmware flashed on it
@@ -41,7 +38,6 @@ var (
 )
 
 func updateTrackInfo(client mqtt.Client, msg mqtt.Message) {
-	// this code causes a hardfault    ¿?
 	ba := msg.Payload()
 	if len(ba) != 4 {
 		return
@@ -71,9 +67,6 @@ func configureWifi(player int) {
 
 	topicTx = "player" + strconv.Itoa(player) + "/tx"
 	topicRx = "player" + strconv.Itoa(player) + "/rx"
-
-	/*uart.Configure(machine.UARTConfig{TX: tx, RX: rx})
-	rand.Seed(time.Now().UnixNano())*/
 
 	// Configure SPI for 8Mhz, Mode 0, MSB First
 	spi.Configure(machine.SPIConfig{
