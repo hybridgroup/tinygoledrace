@@ -115,7 +115,7 @@ func main() {
 func handleLED() {
 	for {
 		switch status {
-		case game.Available:
+		case game.Looking, game.Available:
 			// red/blue color effect
 			rb = !rb
 			for i := range leds {
@@ -189,6 +189,22 @@ func setupSubs() {
 		failMessage(token.Error().Error())
 	}
 
+	if token := cl.Subscribe(game.TopicRaceCountdown, 0, handleRaceCountdown); token.Wait() && token.Error() != nil {
+		failMessage(token.Error().Error())
+	}
+
+	if token := cl.Subscribe(game.TopicRaceStart, 0, handleRaceStart); token.Wait() && token.Error() != nil {
+		failMessage(token.Error().Error())
+	}
+
+	if token := cl.Subscribe(game.TopicRaceOver, 0, handleRaceOver); token.Wait() && token.Error() != nil {
+		failMessage(token.Error().Error())
+	}
+
+	if token := cl.Subscribe(game.TopicRaceWinner, 0, handleRaceWinner); token.Wait() && token.Error() != nil {
+		failMessage(token.Error().Error())
+	}
+
 	if token := cl.Subscribe(game.TopicRacerPosition, 0, handleRacing); token.Wait() && token.Error() != nil {
 		failMessage(token.Error().Error())
 	}
@@ -200,6 +216,22 @@ func handleRaceAvailable(client mqtt.Client, msg mqtt.Message) {
 
 func handleRaceStarting(client mqtt.Client, msg mqtt.Message) {
 	status = game.Starting
+}
+
+func handleRaceCountdown(client mqtt.Client, msg mqtt.Message) {
+	status = game.Countdown
+}
+
+func handleRaceStart(client mqtt.Client, msg mqtt.Message) {
+	status = game.Start
+}
+
+func handleRaceOver(client mqtt.Client, msg mqtt.Message) {
+	status = game.Over
+}
+
+func handleRaceWinner(client mqtt.Client, msg mqtt.Message) {
+	status = game.Winner
 }
 
 func handleRacing(client mqtt.Client, msg mqtt.Message) {
