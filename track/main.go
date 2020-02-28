@@ -47,7 +47,6 @@ var (
 
 	cl      mqtt.Client
 	topicTx = "tinygorace/track/ready"
-	topicRx = "tinygorace/hub/ready"
 
 	ledstrip *apa102.Device
 	leds     []color.RGBA
@@ -102,10 +101,10 @@ func main() {
 	go handleLED()
 
 	for {
-		token := cl.Publish(topicTx, 0, false, []byte("hello"))
-		token.Wait()
-		if token.Error() != nil {
-			println(token.Error().Error())
+		if status == game.Looking {
+			if token := cl.Publish(game.TopicTrackAvailable, 0, false, []byte{}); token.Wait() && token.Error() != nil {
+				println(token.Error().Error())
+			}
 		}
 
 		time.Sleep(time.Millisecond * 1000)
@@ -122,15 +121,16 @@ func handleLED() {
 			ledIndex++
 		case game.Ready:
 			clearTrack()
-
 		case game.Starting:
 			// excite visual
-		case game.Countdown, game.Racing, game.Over:
+		case game.Countdown, game.Start, game.Over:
 			clearTrack()
 
 			// draw racers
 			leds[racer1.Pos] = color.RGBA{R: 0xff, G: 0x00, B: 0x00, A: 0x77}
 			leds[racer2.Pos] = color.RGBA{R: 0x00, G: 0x00, B: 0xff, A: 0x77}
+		case game.Winner:
+			// excite visual
 		}
 
 		ledstrip.WriteColors(leds)
