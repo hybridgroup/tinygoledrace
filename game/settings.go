@@ -1,4 +1,8 @@
 package game
 
-// TrackLength is how long is the track, in pixels
-const TrackLength = 300
+const (
+	// TrackLength is how long is the track, in pixels
+	TrackLength = 300
+	// Laps is how many total laps in the race
+	Laps = 3
+)
