@@ -147,7 +147,7 @@ func tap() {
 
 func heartbeat() {
 	for {
-		if status == game.Looking {
+		if status != game.Start {
 			topic := strings.Replace(game.TopicRacerAvailable, "+", "1", 1)
 
 			if token := cl.Publish(topic, 0, false, []byte("available")); token.Wait() && token.Error() != nil {
