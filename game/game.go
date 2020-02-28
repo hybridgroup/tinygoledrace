@@ -6,9 +6,8 @@ const (
 	Available
 	Ready
 	Starting
-	Start
 	Countdown
-	Racing
+	Start
 	Over
 	Winner
 )
