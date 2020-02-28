@@ -6,9 +6,11 @@ const (
 	Available
 	Ready
 	Starting
+	Start
 	Countdown
 	Racing
 	Over
+	Winner
 )
 
 // mqtt topics
