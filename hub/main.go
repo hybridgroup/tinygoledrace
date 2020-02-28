@@ -24,15 +24,42 @@ var (
 	bgSound chan bool
 )
 
+func gameAvailable() {
+	if status != game.Looking {
+		// game already going
+		return
+	}
+
+	status = game.Available
+	broker.Publish(game.TopicRaceAvailable, []byte{})
+
+	// give players 15 seconds to join
+	gobot.After(15*time.Second, func() {
+		gameStarting()
+	})
+}
+
 func gameStarting() {
+	status = game.Starting
+	broker.Publish(game.TopicRaceStarting, []byte{})
 	sound.Sound("./audio/space-race-car.mp3")
+
+	// give players 15 seconds before start
+	// TODO: countdown
+	gobot.After(15*time.Second, func() {
+		gameStart()
+	})
 }
 
 func gameStart() {
+	status = game.Start
+	broker.Publish(game.TopicRaceStart, []byte{})
 	sound.Sound("./audio/space-race-car-2.mp3")
 }
 
 func gameOver() {
+	status = game.Over
+	broker.Publish(game.TopicRaceOver, []byte{})
 	sound.Sound("./audio/space-race-pit-stop.mp3")
 
 	gobot.After(5*time.Second, func() {
@@ -40,7 +67,26 @@ func gameOver() {
 	})
 }
 
+func racerJoin(msg mqtt.Message) {
+	// only let the racer join if current broadcasting available
+	if status != game.Available {
+		return
+	}
+
+	// use msg.Topic() to determine which racer aka el[2]
+	el := strings.Split(msg.Topic(), "/")
+	if len(el) < 4 {
+		// something wrong
+		return
+	}
+}
+
 func handleRacing(msg mqtt.Message) {
+	// is the race going?
+	if status != game.Start {
+		return
+	}
+
 	// use msg.Topic() to determine which racer aka el[2]
 	el := strings.Split(msg.Topic(), "/")
 	if len(el) < 4 {
@@ -88,24 +134,21 @@ func main() {
 	sound = audio.NewAdaptor()
 
 	work := func() {
-		broker.On(game.TopicRaceStarting, func(msg mqtt.Message) {
-			gameStarting()
-		})
-
-		broker.On(game.TopicRaceStart, func(msg mqtt.Message) {
-			gameStart()
+		broker.On(game.TopicRacerJoin, func(msg mqtt.Message) {
+			racerJoin(msg)
 		})
 
 		broker.On(game.TopicRacerRacing, func(msg mqtt.Message) {
 			handleRacing(msg)
 		})
 
-		broker.On(game.TopicRaceOver, func(msg mqtt.Message) {
-			gameOver()
+		// TODO: push button that starts game
+		broker.On(game.TopicHubAvailable, func(msg mqtt.Message) {
+			gameAvailable()
 		})
 	}
 
-	robot := gobot.NewRobot("hubBot",
+	robot := gobot.NewRobot("raceBot",
 		[]gobot.Connection{broker, sound},
 		work,
 	)
