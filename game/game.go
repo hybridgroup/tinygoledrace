@@ -25,6 +25,25 @@ const (
 	TopicRacerJoin      = "tinygorace/racer/join"
 	TopicRacerReady     = "tinygorace/racer/ready"
 	TopicRacerRacing    = "tinygorace/racer/+/racing"
+	TopicRacerPosition  = "tinygorace/racer/+/position"
 
 	TopicTrackAvailable = "tinygorace/track/available"
 )
+
+// Racer is one of the racers on the track.
+type Racer struct {
+	// Speed is how fast the racer is going
+	Speed int
+
+	// Pos is the position of the racer on the track
+	Pos int
+
+	// Laps is how many laps the racer has completed
+	Laps int
+}
+
+// Track is the track.
+type Track struct {
+	// Len is how long the track is
+	Len int
+}

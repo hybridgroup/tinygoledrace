@@ -6,6 +6,7 @@ import (
 	"machine"
 	"math/rand"
 	"strconv"
+	"strings"
 	"time"
 
 	"tinygo.org/x/drivers/apa102"
@@ -22,9 +23,9 @@ import (
 )
 
 var (
-	status    = game.Looking
-	racer1Pos uint16
-	racer2Pos uint16
+	status = game.Looking
+	racer1 = game.Racer{}
+	racer2 = game.Racer{}
 )
 
 // change these to connect to a different UART or pins for the ESP8266/ESP32
@@ -71,7 +72,7 @@ func main() {
 
 	a := apa102.New(spi0)
 	ledstrip = &a
-	leds = make([]color.RGBA, 150)
+	leds = make([]color.RGBA, game.TrackLength)
 
 	// Configure SPI1 for 8Mhz, Mode 0, MSB First
 	spi1.Configure(machine.SPIConfig{
@@ -87,7 +88,7 @@ func main() {
 	connectToAP()
 
 	opts := mqtt.NewClientOptions()
-	opts.AddBroker(server).SetClientID("track-" + randomString(10))
+	opts.AddBroker(connect.Broker).SetClientID("track-" + randomString(10))
 
 	println("Connecting to MQTT broker at", connect.Broker)
 	cl = mqtt.NewClient(opts)
@@ -126,20 +127,27 @@ func handleLED() {
 				}
 			}
 		case game.Ready:
-			// clear the track
-			for i := range leds {
-				leds[i] = color.RGBA{R: 0x00, G: 0x00, B: 0x00, A: 0x77}
-			}
+			clearTrack()
 
 		case game.Starting:
 			// excite visual
 		case game.Countdown, game.Racing, game.Over:
-			// draw racers
+			clearTrack()
 
+			// draw racers
+			leds[racer1.Pos] = color.RGBA{R: 0xff, G: 0x00, B: 0x00, A: 0x77}
+			leds[racer2.Pos] = color.RGBA{R: 0x00, G: 0x00, B: 0xff, A: 0x77}
 		}
 
 		ledstrip.WriteColors(leds)
 		time.Sleep(100 * time.Millisecond)
+	}
+}
+
+func clearTrack() {
+	// clear the track
+	for i := range leds {
+		leds[i] = color.RGBA{R: 0x00, G: 0x00, B: 0x00, A: 0x77}
 	}
 }
 
@@ -158,8 +166,8 @@ func handleDisplay() {
 	for {
 		display.ClearBuffer()
 
-		r1 := strconv.Itoa(int(racer1Pos))
-		r2 := strconv.Itoa(int(racer2Pos))
+		r1 := strconv.Itoa(int(racer1.Pos))
+		r2 := strconv.Itoa(int(racer2.Pos))
 		msg := []byte("r1: " + r1)
 		tinyfont.WriteLine(&display, &freemono.Bold9pt7b, 10, 20, msg, black)
 
@@ -181,7 +189,7 @@ func setupSubs() {
 		failMessage(token.Error().Error())
 	}
 
-	if token := cl.Subscribe(game.TopicRacerRacing, 0, handleRacing); token.Wait() && token.Error() != nil {
+	if token := cl.Subscribe(game.TopicRacerPosition, 0, handleRacing); token.Wait() && token.Error() != nil {
 		failMessage(token.Error().Error())
 	}
 }
@@ -195,9 +203,20 @@ func handleRaceStarting(client mqtt.Client, msg mqtt.Message) {
 }
 
 func handleRacing(client mqtt.Client, msg mqtt.Message) {
-	// TODO: use msg.Topic() to determine which racer
+	// use msg.Topic() to determine which racer aka el[2]
+	el := strings.Split(msg.Topic(), "/")
+	if len(el) < 4 {
+		// something wrong
+		return
+	}
+
 	r, _ := strconv.Atoi(string(msg.Payload()))
-	racer1Pos = uint16(r)
+	switch el[2] {
+	case "1":
+		racer1.Pos = r
+	case "2":
+		racer2.Pos = r
+	}
 }
 
 // connect to access point
