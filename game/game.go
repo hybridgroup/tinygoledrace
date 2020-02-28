@@ -20,10 +20,11 @@ const (
 	TopicRaceCountdown = "tinygorace/race/countdown"
 	TopicRaceStart     = "tinygorace/race/start"
 	TopicRaceOver      = "tinygorace/race/over"
+	TopicRaceWinner    = "tinygorace/race/winner"
 
-	TopicRacerAvailable = "tinygorace/racer/available"
-	TopicRacerJoin      = "tinygorace/racer/join"
-	TopicRacerReady     = "tinygorace/racer/ready"
+	TopicRacerAvailable = "tinygorace/racer/+/available"
+	TopicRacerJoin      = "tinygorace/racer/+/join"
+	TopicRacerReady     = "tinygorace/racer/+/ready"
 	TopicRacerRacing    = "tinygorace/racer/+/racing"
 	TopicRacerPosition  = "tinygorace/racer/+/position"
 
