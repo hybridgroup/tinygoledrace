@@ -3,6 +3,7 @@ package main
 import (
 	"machine"
 	"strconv"
+	"strings"
 	"time"
 
 	"tinygo.org/x/tinydraw"
@@ -14,6 +15,7 @@ import (
 	"tinygo.org/x/drivers/net/mqtt"
 
 	"../connect"
+	"../game"
 )
 
 var (
@@ -31,10 +33,10 @@ var (
 	console = machine.UART0
 
 	cl      mqtt.Client
-	topicTx = "tinygo/tx"
-	topicRx = "tinygo/rx"
 	payload []byte
 	enabled bool
+
+	status = game.Looking
 )
 
 func updateTrackInfo(client mqtt.Client, msg mqtt.Message) {
@@ -65,9 +67,6 @@ func updateTrackInfo(client mqtt.Client, msg mqtt.Message) {
 func configureWifi(player int) {
 	display.FillScreen(colors[BACKGROUND])
 
-	topicTx = "player" + strconv.Itoa(player) + "/tx"
-	topicRx = "player" + strconv.Itoa(player) + "/rx"
-
 	// Configure SPI for 8Mhz, Mode 0, MSB First
 	spi.Configure(machine.SPIConfig{
 		Frequency: 8 * 1e6,
@@ -91,16 +90,11 @@ func configureWifi(player int) {
 	}
 
 	// subscribe
-	token := cl.Subscribe(topicRx, 0, updateTrackInfo)
-	token.Wait()
-	if token.Error() != nil {
-		tinyfont.WriteLine(display, &proggy.TinySZ8pt7b, 0, 90, []byte(token.Error().Error()), colors[PLAYER1])
-		failMessage(token.Error().Error())
-	}
+	setupSubs()
 
 	enabled = true
 
-	go sendLoop()
+	go heartbeat()
 
 	tinyfont.WriteLine(display, &proggy.TinySZ8pt7b, 0, 100, []byte("Done."), colors[PLAYER2])
 	println("Done.")
@@ -143,38 +137,78 @@ func failMessage(msg string) {
 	}
 }
 
-func sendLoop() {
-	retries := uint8(0)
-	var token mqtt.Token
+func tap() {
+	topic := strings.Replace(game.TopicRacerRacing, "+", "1", 1)
 
-	for {
-		if enabled {
-			if retries == 0 {
-				println("Publishing MQTT message...", string(payload))
-				token = cl.Publish(topicTx, 0, false, payload)
-				token.Wait()
-			}
-			if retries > 0 || token.Error() != nil {
-				if retries < 10 {
-					token = cl.Connect()
-					if token.Wait() && token.Error() != nil {
-						retries++
-						println("NOT CONNECTED TO MQTT (sendLoop)")
-					} else {
-						retries = 0
-					}
-				} else {
-					enabled = false
-				}
-			}
-			payload = []byte("none")
-			time.Sleep(100 * time.Millisecond)
-		} else {
-			time.Sleep(1 * time.Second)
-		}
+	if token := cl.Publish(topic, 0, false, []byte(strconv.Itoa(1))); token.Wait() && token.Error() != nil {
+		println(token.Error().Error())
 	}
 }
 
-func Send(mqttpayload []byte) {
-	payload = mqttpayload
+func heartbeat() {
+	for {
+		if status == game.Looking {
+			topic := strings.Replace(game.TopicRacerAvailable, "+", "1", 1)
+
+			if token := cl.Publish(topic, 0, false, []byte("available")); token.Wait() && token.Error() != nil {
+				println(token.Error().Error())
+			}
+		}
+
+		time.Sleep(time.Millisecond * 1000)
+	}
+}
+
+func setupSubs() {
+	if token := cl.Subscribe(game.TopicRaceAvailable, 0, handleRaceAvailable); token.Wait() && token.Error() != nil {
+		failMessage(token.Error().Error())
+	}
+
+	if token := cl.Subscribe(game.TopicRaceStarting, 0, handleRaceStarting); token.Wait() && token.Error() != nil {
+		failMessage(token.Error().Error())
+	}
+
+	if token := cl.Subscribe(game.TopicRaceCountdown, 0, handleRaceCountdown); token.Wait() && token.Error() != nil {
+		failMessage(token.Error().Error())
+	}
+
+	if token := cl.Subscribe(game.TopicRaceStart, 0, handleRaceStart); token.Wait() && token.Error() != nil {
+		failMessage(token.Error().Error())
+	}
+
+	if token := cl.Subscribe(game.TopicRaceOver, 0, handleRaceOver); token.Wait() && token.Error() != nil {
+		failMessage(token.Error().Error())
+	}
+
+	if token := cl.Subscribe(game.TopicRaceWinner, 0, handleRaceWinner); token.Wait() && token.Error() != nil {
+		failMessage(token.Error().Error())
+	}
+
+	if token := cl.Subscribe(game.TopicRacerPosition, 0, updateTrackInfo); token.Wait() && token.Error() != nil {
+		failMessage(token.Error().Error())
+	}
+}
+
+func handleRaceAvailable(client mqtt.Client, msg mqtt.Message) {
+	status = game.Available
+}
+
+func handleRaceStarting(client mqtt.Client, msg mqtt.Message) {
+	status = game.Starting
+}
+
+func handleRaceCountdown(client mqtt.Client, msg mqtt.Message) {
+	status = game.Countdown
+}
+
+func handleRaceStart(client mqtt.Client, msg mqtt.Message) {
+	status = game.Start
+}
+
+func handleRaceOver(client mqtt.Client, msg mqtt.Message) {
+	status = game.Over
+}
+
+func handleRaceWinner(client mqtt.Client, msg mqtt.Message) {
+	status = game.Winner
 }

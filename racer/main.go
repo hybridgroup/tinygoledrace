@@ -96,7 +96,8 @@ func main() {
 			if !tapped {
 				tapped = true
 				// TAP event
-				Send([]byte("1"))
+				tap()
+
 				lr = !lr
 				if lr {
 					stepL(false)
@@ -109,7 +110,7 @@ func main() {
 		} else {
 			tapped = false
 		}
-		time.Sleep(10*time.Millisecond)
+		time.Sleep(10 * time.Millisecond)
 	}
 
 }
