@@ -45,7 +45,7 @@ var (
 
 	cl       mqtt.Client
 	ledstrip *apa102.Device
-	leds     []color.RGBA
+	leds     [game.TrackLength]color.RGBA
 	ledIndex uint8
 )
 
@@ -56,7 +56,7 @@ func main() {
 		Frequency: machine.TWI_FREQ_400KHZ,
 	})
 
-	go handleDisplay()
+	//go handleDisplay()
 
 	rand.Seed(time.Now().UnixNano())
 
@@ -68,7 +68,7 @@ func main() {
 
 	a := apa102.New(spi0)
 	ledstrip = &a
-	leds = make([]color.RGBA, game.TrackLength)
+	//leds = make([]color.RGBA, game.TrackLength)
 
 	// Configure SPI1 for 8Mhz, Mode 0, MSB First
 	spi1.Configure(machine.SPIConfig{
@@ -96,9 +96,9 @@ func main() {
 	// subscribe
 	setupSubs()
 
-	go handleLED()
+	go heartbeat()
 
-	heartbeat()
+	handleLED()
 }
 
 func handleLED() {
@@ -122,21 +122,21 @@ func handleLED() {
 				case i == racer2.Pos:
 					leds[i] = color.RGBA{R: 0x00, G: 0x00, B: 0xff, A: 0xff}
 				default:
-					leds[i] = color.RGBA{R: 0x00, G: 0x00, B: 0x00, A: 0xff}
+					leds[i] = color.RGBA{R: 0x00, G: 0x00, B: 0x00, A: 0x00}
 				}
 			}
 		case game.Over:
 			// excite visual
 		}
 
-		ledstrip.WriteColors(leds)
-		time.Sleep(200 * time.Millisecond)
+		ledstrip.WriteColors(leds[:])
+		time.Sleep(100 * time.Millisecond)
 	}
 }
 
 func clearTrack() {
 	for i := range leds {
-		leds[i] = color.RGBA{R: 0x00, G: 0x00, B: 0x00, A: 0xff}
+		leds[i] = color.RGBA{R: 0x00, G: 0x00, B: 0x00, A: 0x00}
 	}
 }
 
@@ -171,12 +171,12 @@ func handleDisplay() {
 
 func heartbeat() {
 	for {
-		if status == game.Looking || status == game.Available {
-			if token := cl.Publish(game.TopicTrackAvailable, 0, false, []byte{0}); token.Wait() && token.Error() != nil {
-				println("heartbeat:", token.Error().Error())
-			}
+		//if status == game.Looking || status == game.Available {
+		if token := cl.Publish(game.TopicTrackAvailable, 0, false, []byte("")); token.Wait() && token.Error() != nil {
+			println("heartbeat:", token.Error().Error())
 		}
-		time.Sleep(time.Millisecond * 1000)
+		//}
+		time.Sleep(time.Second * 5)
 	}
 }
 
@@ -214,19 +214,22 @@ func handleRacing(client mqtt.Client, msg mqtt.Message) {
 	// use msg.Topic() to determine which racer aka el[2]
 	el := strings.Split(msg.Topic(), "/")
 	if len(el) < 4 {
-		// something wrong
 		println("topic too short")
 		return
 	}
 
 	data := strings.Split(string(msg.Payload()), ",")
 	if len(data) != 2 {
-		// something wrong
 		println("data too short")
 		return
 	}
 
-	pos, _ := strconv.Atoi(data[0])
+	pos, err := strconv.Atoi(data[0])
+	if err != nil {
+		println(err)
+		return
+	}
+
 	if pos >= game.TrackLength {
 		pos = game.TrackLength
 	}
