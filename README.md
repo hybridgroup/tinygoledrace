@@ -65,6 +65,9 @@ Published by the hub for each racer when it has successfully joined a race
 `tinygorace/racer/{racerid}/position`
 
 published by hub to signify the position of a racer on the track
+data: "position,laps"
+e.g.
+27,2
 
 ### Racer
 

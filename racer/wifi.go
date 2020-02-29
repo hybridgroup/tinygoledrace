@@ -40,28 +40,32 @@ var (
 )
 
 func updateTrackInfo(client mqtt.Client, msg mqtt.Message) {
-	ba := msg.Payload()
-	if len(ba) != 4 {
+	b := msg.Payload()
+	if len(b) == 0 {
 		return
 	}
 	var speed int16
-	speed |= int16(ba[0])
-	speed |= int16(ba[1]) << 8
+	speed = 0
 
 	speedGaugeNeedle(speed, colors[BLACK])
 	speedGaugeNeedle(speed, colors[player])
 	oldSpeed = speed
 
-	var progress int16
-	progress |= int16(ba[2])
-	progress |= int16(ba[3]) << 8
+	data := strings.Split(string(b), ",")
+	if len(data) != 2 {
+		// something wrong
+		return
+	}
+
+	position, _ := strconv.Atoi(data[0])
+	laps, _ := strconv.Atoi(data[1])
+
+	println(position)
+	println(laps)
+
 	resetLapBar()
-	progressLapBar(progress)
-
-	progress |= int16(ba[4])
-	progress |= int16(ba[5]) << 8
-	progressRaceBar(progress)
-
+	progressLapBar(int16(laps))
+	progressRaceBar(int16(position))
 }
 
 func configureWifi(player int) {

@@ -15,8 +15,7 @@ import (
 
 var (
 	status = game.Looking
-	racer1 = game.Racer{}
-	racer2 = game.Racer{}
+	racers map[string]*game.Racer
 
 	broker *mqtt.Adaptor
 	sound  *audio.Adaptor
@@ -82,6 +81,7 @@ func racerJoin(msg mqtt.Message) {
 
 	// notify they are in the race
 	racerID := el[2]
+	racers[racerID] = &game.Racer{}
 	topic := strings.Replace(game.TopicRacerJoin, "+", racerID, 1)
 	broker.Publish(topic, []byte{})
 }
@@ -101,31 +101,33 @@ func handleRacing(msg mqtt.Message) {
 	racerID := el[2]
 
 	r, _ := strconv.Atoi(string(msg.Payload()))
-	switch racerID {
-	case "1":
-		racer1.Pos += r
-		if racer1.Pos > game.TrackLength {
-			racer1.Pos -= game.TrackLength
-			racer1.Laps++
+	racers[racerID].Pos += r
+	if racers[racerID].Pos > game.TrackLength {
+		racers[racerID].Pos -= game.TrackLength
+		racers[racerID].Laps++
 
-			// TODO: check for winner
+		// check for winner
+		if racers[racerID].Laps > game.Laps {
+			status = game.Over
+			broker.Publish(game.TopicRaceOver, []byte(racerID))
 
-			// send new pos
-			topic := strings.Replace(game.TopicRacerPosition, "+", "1", 1)
-			broker.Publish(topic, []byte(strconv.Itoa(racer1.Pos)))
+			gobot.After(1*time.Second, func() {
+				status = game.Winner
+				broker.Publish(game.TopicRaceWinner, []byte(racerID))
+
+				gobot.After(10*time.Second, func() {
+					status = game.Looking
+					gameAvailable()
+				})
+			})
+			return
 		}
-	case "2":
-		racer2.Pos += r
-		if racer1.Pos > game.TrackLength {
-			racer1.Pos -= game.TrackLength
-			racer1.Laps++
 
-			// TODO: check for winner
-
-			// send new pos
-			topic := strings.Replace(game.TopicRacerPosition, "+", "2", 1)
-			broker.Publish(topic, []byte(strconv.Itoa(racer2.Pos)))
-		}
+		// send new pos
+		topic := strings.Replace(game.TopicRacerPosition, "+", racerID, 1)
+		result := strconv.Itoa(racers[racerID].Pos) + "," +
+			strconv.Itoa(racers[racerID].Laps)
+		broker.Publish(topic, []byte(result))
 	}
 }
 
@@ -138,6 +140,8 @@ func main() {
 
 	broker = mqtt.NewAdaptor(host, "hub")
 	sound = audio.NewAdaptor()
+
+	racers = make(map[string]*game.Racer)
 
 	work := func() {
 		broker.On(game.TopicRacerJoin, func(msg mqtt.Message) {
