@@ -18,6 +18,7 @@ const (
 
 	TopicRaceAvailable = "tinygorace/race/available"
 	TopicRaceStarting  = "tinygorace/race/starting"
+	TopicRaceJoined    = "tinygorace/race/racer/+/joined"
 	TopicRaceCountdown = "tinygorace/race/countdown"
 	TopicRaceStart     = "tinygorace/race/start"
 	TopicRaceOver      = "tinygorace/race/over"
