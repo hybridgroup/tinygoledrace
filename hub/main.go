@@ -100,11 +100,17 @@ func handleRacing(msg mqtt.Message) {
 	el := strings.Split(msg.Topic(), "/")
 	if len(el) < 4 {
 		// something wrong
+		fmt.Println("invalid racing topic")
 		return
 	}
 	racerID := el[2]
 
-	r, _ := strconv.Atoi(string(msg.Payload()))
+	r, err := strconv.Atoi(string(msg.Payload()))
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+
 	racers[racerID].Pos += r
 	if racers[racerID].Pos > game.TrackLength {
 		racers[racerID].Pos -= game.TrackLength
