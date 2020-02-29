@@ -236,12 +236,21 @@ func handleRacing(client mqtt.Client, msg mqtt.Message) {
 		return
 	}
 
-	r, _ := strconv.Atoi(string(msg.Payload()))
+	data := strings.Split(string(msg.Payload()), ",")
+	if len(data) != 2 {
+		// something wrong
+		println("data too short")
+		return
+	}
+
+	pos, _ := strconv.Atoi(data[0])
+	//laps, _ := strconv.Atoi(data[1])
+
 	switch el[2] {
 	case "1":
-		racer1.Pos = r
+		racer1.Pos = pos
 	case "2":
-		racer2.Pos = r
+		racer2.Pos = pos
 	}
 }
 
