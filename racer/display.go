@@ -144,7 +144,7 @@ func progressLapBar(progress int16) {
 	if progress < 0 {
 		progress = 0
 	}
-	display.FillRectangle(10, 180, rescale(progress, 0, game.TrackLength, 0, 100), 14, colors[player])
+	display.FillRectangle(10, 180, rescale(progress, 0, game.TrackLength, 0, 300), 14, colors[player])
 }
 
 func resetLapBar() {
@@ -158,7 +158,7 @@ func progressRaceBar(progress int16) {
 	if progress < 0 {
 		progress = 0
 	}
-	display.FillRectangle(10, 220, rescale(progress, 0, game.Laps, 0, 100), 14, colors[player])
+	display.FillRectangle(10, 220, rescale(progress, 0, game.Laps, 0, 300), 14, colors[player])
 }
 
 func speedGauge() {
@@ -212,5 +212,5 @@ func stepR(enabled bool) {
 
 // Rescale performs a direct linear rescaling of a number from one scale to another.
 func rescale(input, fromMin, fromMax, toMin, toMax int16) int16 {
-	return (input-fromMin)*(toMax-toMin)/(fromMax-fromMin) + toMin
+	return int16(float32((input-fromMin))*float32((toMax-toMin))/float32((fromMax-fromMin))) + toMin
 }

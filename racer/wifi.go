@@ -42,6 +42,7 @@ var (
 func updateTrackInfo(client mqtt.Client, msg mqtt.Message) {
 	b := msg.Payload()
 	if len(b) == 0 {
+		println("no data")
 		return
 	}
 	var speed int16
@@ -54,18 +55,16 @@ func updateTrackInfo(client mqtt.Client, msg mqtt.Message) {
 	data := strings.Split(string(b), ",")
 	if len(data) != 2 {
 		// something wrong
+		println("data too short")
 		return
 	}
 
 	position, _ := strconv.Atoi(data[0])
 	laps, _ := strconv.Atoi(data[1])
 
-	println(position)
-	println(laps)
-
 	resetLapBar()
-	progressLapBar(int16(laps))
-	progressRaceBar(int16(position))
+	progressLapBar(int16(position))
+	progressRaceBar(int16(laps))
 }
 
 func configureWifi(player int) {
