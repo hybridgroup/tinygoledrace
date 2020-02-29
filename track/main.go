@@ -73,7 +73,6 @@ func main() {
 
 	a := apa102.New(spi0)
 	ledstrip = &a
-	//leds = make([]color.RGBA, game.TrackLength)
 
 	// Configure SPI1 for 8Mhz, Mode 0, MSB First
 	spi1.Configure(machine.SPIConfig{
