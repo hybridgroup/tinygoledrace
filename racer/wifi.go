@@ -195,14 +195,17 @@ func setupSubs() {
 }
 
 func handleRaceAvailable(client mqtt.Client, msg mqtt.Message) {
+	if status == game.Available {
+		return
+	}
+
 	status = game.Available
 
-	// auto-join the race
+	// auto-join the race once status changes
 	topic := strings.Replace(game.TopicRacerJoin, "+", strconv.Itoa(player), 1)
 	if token := cl.Publish(topic, 0, false, []byte("")); token.Wait() && token.Error() != nil {
 		println(token.Error().Error())
 	}
-
 }
 
 func handleRaceStarting(client mqtt.Client, msg mqtt.Message) {
