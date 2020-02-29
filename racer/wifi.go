@@ -64,6 +64,7 @@ func updateTrackInfo(client mqtt.Client, msg mqtt.Message) {
 
 	resetLapBar()
 	progressLapBar(int16(position))
+	resetRaceBar()
 	progressRaceBar(int16(laps))
 }
 
@@ -83,7 +84,8 @@ func configureWifi(player int) {
 	connectToAP()
 
 	opts := mqtt.NewClientOptions()
-	opts.AddBroker(connect.Broker).SetClientID("tinygo-racer-" + strconv.Itoa(player))
+	opts.AddBroker(connect.Broker)
+	opts.SetClientID("tinygo-racer-" + strconv.Itoa(player))
 
 	println("Connecting to MQTT broker at", connect.Broker)
 	cl = mqtt.NewClient(opts)

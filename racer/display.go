@@ -161,6 +161,10 @@ func progressRaceBar(progress int16) {
 	display.FillRectangle(10, 220, rescale(progress, 0, game.Laps, 0, 300), 14, colors[player])
 }
 
+func resetRaceBar() {
+	display.FillRectangle(10, 220, 300, 14, colors[BACKGROUND])
+}
+
 func speedGauge() {
 	tinydraw.FilledCircle(display, 80, 90, 70, colors[WHITE])
 	tinydraw.FilledCircle(display, 80, 90, 66, colors[BACKGROUND])
@@ -211,6 +215,7 @@ func stepR(enabled bool) {
 }
 
 // Rescale performs a direct linear rescaling of a number from one scale to another.
+// TODO: everything with int to avoid extra computational work.
 func rescale(input, fromMin, fromMax, toMin, toMax int16) int16 {
 	return int16(float32((input-fromMin))*float32((toMax-toMin))/float32((fromMax-fromMin))) + toMin
 }
