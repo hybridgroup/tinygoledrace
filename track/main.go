@@ -26,6 +26,11 @@ var (
 	status = game.Looking
 	racer1 = game.Racer{}
 	racer2 = game.Racer{}
+
+	white       = color.RGBA{R: 0xff, G: 0xff, B: 0xff, A: 0xff}
+	racer1color = color.RGBA{R: 0xff, G: 0x00, B: 0x00, A: 0xff}
+	racer2color = color.RGBA{R: 0x00, G: 0x00, B: 0xff, A: 0xff}
+	blank       = color.RGBA{R: 0x00, G: 0x00, B: 0x00, A: 0x00}
 )
 
 // change these to connect to a different UART or pins for the ESP8266/ESP32
@@ -116,13 +121,13 @@ func handleLED() {
 			for i := range leds {
 				switch {
 				case (i == racer1.Pos) && (i == racer2.Pos):
-					leds[i] = color.RGBA{R: 0xff, G: 0xff, B: 0xff, A: 0xff}
+					leds[i] = white
 				case i == racer1.Pos:
-					leds[i] = color.RGBA{R: 0xff, G: 0x00, B: 0x00, A: 0xff}
+					leds[i] = racer1color
 				case i == racer2.Pos:
-					leds[i] = color.RGBA{R: 0x00, G: 0x00, B: 0xff, A: 0xff}
+					leds[i] = racer2color
 				default:
-					leds[i] = color.RGBA{R: 0x00, G: 0x00, B: 0x00, A: 0x00}
+					leds[i] = blank
 				}
 			}
 		case game.Over:
@@ -212,19 +217,24 @@ func handleRaceOver(client mqtt.Client, msg mqtt.Message) {
 
 func handleRacing(client mqtt.Client, msg mqtt.Message) {
 	// use msg.Topic() to determine which racer aka el[2]
-	el := strings.Split(msg.Topic(), "/")
-	if len(el) < 4 {
+	topic := msg.Topic()
+	last := strings.LastIndex(topic, "/")
+	if last == -1 {
 		println("topic too short")
 		return
 	}
 
-	data := strings.Split(string(msg.Payload()), ",")
-	if len(data) != 2 {
-		println("data too short")
+	middle := strings.LastIndex(topic[:last], "/")
+	racerID := topic[middle+1 : last]
+
+	payload := string(msg.Payload())
+	loc := strings.Index(payload, ",")
+	if loc == -1 {
+		println("payload too short")
 		return
 	}
 
-	pos, err := strconv.Atoi(data[0])
+	pos, err := strconv.Atoi(payload[:loc])
 	if err != nil {
 		println(err)
 		return
@@ -234,7 +244,7 @@ func handleRacing(client mqtt.Client, msg mqtt.Message) {
 		pos = game.TrackLength
 	}
 
-	switch el[2] {
+	switch racerID {
 	case "1":
 		racer1.Pos = pos
 	case "2":
