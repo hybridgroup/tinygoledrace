@@ -33,6 +33,14 @@ const (
 	TopicTrackAvailable = "tinygorace/track/available"
 )
 
+const (
+	// Accelleration how fast the racer moves per tap
+	Accelleration = 2.0
+
+	// Friction how much the racer slows down per 100 ms
+	Friction = 0.15
+)
+
 // Racer is one of the racers on the track.
 type Racer struct {
 	// Speed is how fast the racer is going
