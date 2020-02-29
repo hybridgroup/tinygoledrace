@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"os"
 	"strconv"
 	"strings"
@@ -29,6 +30,7 @@ func gameAvailable() {
 		return
 	}
 
+	fmt.Println("race available")
 	status = game.Available
 	broker.Publish(game.TopicRaceAvailable, []byte{})
 
@@ -39,6 +41,7 @@ func gameAvailable() {
 }
 
 func gameStarting() {
+	fmt.Println("race starting")
 	status = game.Starting
 	broker.Publish(game.TopicRaceStarting, []byte{})
 	sound.Sound("./audio/space-race-car.mp3")
@@ -51,6 +54,7 @@ func gameStarting() {
 }
 
 func gameStart() {
+	fmt.Println("race started")
 	status = game.Start
 	broker.Publish(game.TopicRaceStart, []byte{})
 	sound.Sound("./audio/space-race-car-2.mp3")
@@ -108,10 +112,12 @@ func handleRacing(msg mqtt.Message) {
 
 		// check for winner
 		if racers[racerID].Laps > game.Laps {
+			fmt.Println("race over")
 			status = game.Over
 			broker.Publish(game.TopicRaceOver, []byte(racerID))
 
 			gobot.After(1*time.Second, func() {
+				fmt.Println("winner is", racerID)
 				status = game.Winner
 				broker.Publish(game.TopicRaceWinner, []byte(racerID))
 
@@ -145,10 +151,12 @@ func main() {
 
 	work := func() {
 		broker.On(game.TopicRacerJoin, func(msg mqtt.Message) {
+			fmt.Println("racer joined")
 			racerJoin(msg)
 		})
 
 		broker.On(game.TopicRacerRacing, func(msg mqtt.Message) {
+			fmt.Println("racing data received")
 			handleRacing(msg)
 		})
 
