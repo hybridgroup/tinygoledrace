@@ -87,7 +87,7 @@ func racerJoin(msg mqtt.Message) {
 	racerID := el[2]
 	racers[racerID] = &game.Racer{}
 	topic := strings.Replace(game.TopicRacerJoin, "+", racerID, 1)
-	broker.Publish(topic, []byte{})
+	broker.Publish(topic, []byte{0})
 }
 
 func handleRacing(msg mqtt.Message) {
@@ -110,6 +110,8 @@ func handleRacing(msg mqtt.Message) {
 		fmt.Println(err)
 		return
 	}
+
+	fmt.Println("racer", racerID, "speed", r)
 
 	racers[racerID].Pos += r
 	if racers[racerID].Pos > game.TrackLength {
@@ -134,13 +136,13 @@ func handleRacing(msg mqtt.Message) {
 			})
 			return
 		}
-
-		// send new pos
-		topic := strings.Replace(game.TopicRacerPosition, "+", racerID, 1)
-		result := strconv.Itoa(racers[racerID].Pos) + "," +
-			strconv.Itoa(racers[racerID].Laps)
-		broker.Publish(topic, []byte(result))
 	}
+
+	// send new pos
+	topic := strings.Replace(game.TopicRacerPosition, "+", racerID, 1)
+	result := strconv.Itoa(racers[racerID].Pos) + "," +
+		strconv.Itoa(racers[racerID].Laps)
+	broker.Publish(topic, []byte(result))
 }
 
 func stopSounds() {
