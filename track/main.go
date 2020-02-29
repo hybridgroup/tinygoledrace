@@ -43,11 +43,7 @@ var (
 		RESET: machine.NINA_RESETN,
 	}
 
-	console = machine.UART0
-
-	cl      mqtt.Client
-	topicTx = "tinygorace/track/ready"
-
+	cl       mqtt.Client
 	ledstrip *apa102.Device
 	leds     []color.RGBA
 	ledIndex uint8
@@ -64,9 +60,10 @@ func main() {
 
 	rand.Seed(time.Now().UnixNano())
 
-	// Configure SPI0 for 5K, Mode 0
+	// Configure SPI0 for 500K, Mode 0
 	spi0.Configure(machine.SPIConfig{
-		Mode: 0,
+		Frequency: 500000,
+		Mode:      0,
 	})
 
 	a := apa102.New(spi0)
@@ -94,6 +91,7 @@ func main() {
 	if token := cl.Connect(); token.Wait() && token.Error() != nil {
 		failMessage(token.Error().Error())
 	}
+	println("Connected")
 
 	// subscribe
 	setupSubs()
@@ -101,10 +99,8 @@ func main() {
 	go handleLED()
 
 	for {
-		if status == game.Looking {
-			if token := cl.Publish(game.TopicTrackAvailable, 0, false, []byte{}); token.Wait() && token.Error() != nil {
-				println(token.Error().Error())
-			}
+		if token := cl.Publish(game.TopicTrackAvailable, 0, false, []byte{0}); token.Wait() && token.Error() != nil {
+			println("heartbeat:", token.Error().Error())
 		}
 
 		time.Sleep(time.Millisecond * 1000)
@@ -124,24 +120,32 @@ func handleLED() {
 		case game.Starting:
 			// excite visual
 		case game.Countdown, game.Start, game.Over:
-			clearTrack()
-
 			// draw racers
-			leds[racer1.Pos] = color.RGBA{R: 0xff, G: 0x00, B: 0x00, A: 0x77}
-			leds[racer2.Pos] = color.RGBA{R: 0x00, G: 0x00, B: 0xff, A: 0x77}
+			for i := range leds {
+				switch {
+				case (i == racer1.Pos) && (i == racer2.Pos):
+					leds[i] = color.RGBA{R: 0xff, G: 0xff, B: 0xff, A: 0xff}
+				case i == racer1.Pos:
+					leds[i] = color.RGBA{R: 0xff, G: 0x00, B: 0x00, A: 0xff}
+				case i == racer2.Pos:
+					leds[i] = color.RGBA{R: 0x00, G: 0x00, B: 0xff, A: 0xff}
+				default:
+					leds[i] = color.RGBA{R: 0x00, G: 0x00, B: 0x00, A: 0xff}
+				}
+			}
 		case game.Winner:
 			// excite visual
 		}
 
 		ledstrip.WriteColors(leds)
-		time.Sleep(100 * time.Millisecond)
+		time.Sleep(200 * time.Millisecond)
 	}
 }
 
 func clearTrack() {
 	// clear the track
 	for i := range leds {
-		leds[i] = color.RGBA{R: 0x00, G: 0x00, B: 0x00, A: 0x77}
+		leds[i] = color.RGBA{R: 0x00, G: 0x00, B: 0x00, A: 0xff}
 	}
 }
 
@@ -179,13 +183,13 @@ func setupSubs() {
 		failMessage(token.Error().Error())
 	}
 
-	if token := cl.Subscribe(game.TopicRaceStarting, 0, handleRaceStarting); token.Wait() && token.Error() != nil {
-		failMessage(token.Error().Error())
-	}
+	// if token := cl.Subscribe(game.TopicRaceStarting, 0, handleRaceStarting); token.Wait() && token.Error() != nil {
+	// 	failMessage(token.Error().Error())
+	// }
 
-	if token := cl.Subscribe(game.TopicRaceCountdown, 0, handleRaceCountdown); token.Wait() && token.Error() != nil {
-		failMessage(token.Error().Error())
-	}
+	// if token := cl.Subscribe(game.TopicRaceCountdown, 0, handleRaceCountdown); token.Wait() && token.Error() != nil {
+	// 	failMessage(token.Error().Error())
+	// }
 
 	if token := cl.Subscribe(game.TopicRaceStart, 0, handleRaceStart); token.Wait() && token.Error() != nil {
 		failMessage(token.Error().Error())
@@ -195,9 +199,9 @@ func setupSubs() {
 		failMessage(token.Error().Error())
 	}
 
-	if token := cl.Subscribe(game.TopicRaceWinner, 0, handleRaceWinner); token.Wait() && token.Error() != nil {
-		failMessage(token.Error().Error())
-	}
+	// if token := cl.Subscribe(game.TopicRaceWinner, 0, handleRaceWinner); token.Wait() && token.Error() != nil {
+	// 	failMessage(token.Error().Error())
+	// }
 
 	if token := cl.Subscribe(game.TopicRacerPosition, 0, handleRacing); token.Wait() && token.Error() != nil {
 		failMessage(token.Error().Error())
@@ -208,31 +212,33 @@ func handleRaceAvailable(client mqtt.Client, msg mqtt.Message) {
 	status = game.Available
 }
 
-func handleRaceStarting(client mqtt.Client, msg mqtt.Message) {
-	status = game.Starting
-}
+// func handleRaceStarting(client mqtt.Client, msg mqtt.Message) {
+// 	status = game.Starting
+// }
 
-func handleRaceCountdown(client mqtt.Client, msg mqtt.Message) {
-	status = game.Countdown
-}
+// func handleRaceCountdown(client mqtt.Client, msg mqtt.Message) {
+// 	status = game.Countdown
+// }
 
 func handleRaceStart(client mqtt.Client, msg mqtt.Message) {
 	status = game.Start
+	println("start")
 }
 
 func handleRaceOver(client mqtt.Client, msg mqtt.Message) {
 	status = game.Over
 }
 
-func handleRaceWinner(client mqtt.Client, msg mqtt.Message) {
-	status = game.Winner
-}
+// func handleRaceWinner(client mqtt.Client, msg mqtt.Message) {
+// 	status = game.Winner
+// }
 
 func handleRacing(client mqtt.Client, msg mqtt.Message) {
 	// use msg.Topic() to determine which racer aka el[2]
 	el := strings.Split(msg.Topic(), "/")
 	if len(el) < 4 {
 		// something wrong
+		println("topic too short")
 		return
 	}
 
@@ -244,6 +250,10 @@ func handleRacing(client mqtt.Client, msg mqtt.Message) {
 	}
 
 	pos, _ := strconv.Atoi(data[0])
+	if pos >= game.TrackLength {
+		pos = game.TrackLength
+	}
+
 	//laps, _ := strconv.Atoi(data[1])
 
 	switch el[2] {
@@ -290,7 +300,7 @@ func randomString(len int) string {
 
 func failMessage(msg string) {
 	for {
-		println(msg)
+		println("fail:", msg)
 		time.Sleep(1 * time.Second)
 	}
 }
