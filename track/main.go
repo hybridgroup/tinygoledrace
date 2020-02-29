@@ -98,13 +98,7 @@ func main() {
 
 	go handleLED()
 
-	for {
-		if token := cl.Publish(game.TopicTrackAvailable, 0, false, []byte{0}); token.Wait() && token.Error() != nil {
-			println("heartbeat:", token.Error().Error())
-		}
-
-		time.Sleep(time.Millisecond * 1000)
-	}
+	heartbeat()
 }
 
 func handleLED() {
@@ -171,7 +165,18 @@ func handleDisplay() {
 
 		display.Display()
 
-		time.Sleep(100 * time.Millisecond)
+		time.Sleep(500 * time.Millisecond)
+	}
+}
+
+func heartbeat() {
+	for {
+		if status == game.Looking || status == game.Available {
+			if token := cl.Publish(game.TopicTrackAvailable, 0, false, []byte{0}); token.Wait() && token.Error() != nil {
+				println("heartbeat:", token.Error().Error())
+			}
+		}
+		time.Sleep(time.Millisecond * 1000)
 	}
 }
 
@@ -199,7 +204,6 @@ func handleRaceAvailable(client mqtt.Client, msg mqtt.Message) {
 
 func handleRaceStart(client mqtt.Client, msg mqtt.Message) {
 	status = game.Start
-	println("start")
 }
 
 func handleRaceOver(client mqtt.Client, msg mqtt.Message) {
