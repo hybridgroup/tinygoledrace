@@ -30,6 +30,7 @@ var display = ili9341.NewParallel(
 	machine.TFT_RD,
 )
 
+// set this to the player to want to use
 var player = 1
 
 var oldSpeed int16
