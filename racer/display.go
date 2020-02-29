@@ -110,6 +110,25 @@ func race() {
 			tapped = false
 		}
 
+		// redraw controls here
+		if oldSpeed != speed {
+			speedGaugeNeedle(speed, colors[BLACK])
+			speedGaugeNeedle(speed, colors[player])
+			oldSpeed = speed
+		}
+
+		if oldPosition != position {
+			resetLapBar()
+			progressLapBar(int16(position))
+			oldPosition = position
+		}
+
+		if oldLaps != laps {
+			resetRaceBar()
+			progressRaceBar(int16(laps))
+			oldLaps = laps
+		}
+
 		time.Sleep(100 * time.Millisecond)
 	}
 }

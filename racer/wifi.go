@@ -45,12 +45,7 @@ func updateTrackInfo(client mqtt.Client, msg mqtt.Message) {
 		println("no data")
 		return
 	}
-	var speed int16
 	speed = 0
-
-	speedGaugeNeedle(speed, colors[BLACK])
-	speedGaugeNeedle(speed, colors[player])
-	oldSpeed = speed
 
 	data := strings.Split(string(b), ",")
 	if len(data) != 2 {
@@ -59,13 +54,11 @@ func updateTrackInfo(client mqtt.Client, msg mqtt.Message) {
 		return
 	}
 
-	position, _ := strconv.Atoi(data[0])
-	laps, _ := strconv.Atoi(data[1])
+	p, _ := strconv.Atoi(data[0])
+	position = int16(p)
 
-	resetLapBar()
-	progressLapBar(int16(position))
-	resetRaceBar()
-	progressRaceBar(int16(laps))
+	l, _ := strconv.Atoi(data[1])
+	laps = int16(l)
 }
 
 func configureWifi(player int) {
@@ -169,14 +162,6 @@ func setupSubs() {
 		failMessage(token.Error().Error())
 	}
 
-	if token := cl.Subscribe(game.TopicRaceStarting, 0, handleRaceStarting); token.Wait() && token.Error() != nil {
-		failMessage(token.Error().Error())
-	}
-
-	if token := cl.Subscribe(game.TopicRaceCountdown, 0, handleRaceCountdown); token.Wait() && token.Error() != nil {
-		failMessage(token.Error().Error())
-	}
-
 	if token := cl.Subscribe(game.TopicRaceStart, 0, handleRaceStart); token.Wait() && token.Error() != nil {
 		failMessage(token.Error().Error())
 	}
@@ -206,14 +191,6 @@ func handleRaceAvailable(client mqtt.Client, msg mqtt.Message) {
 	if token := cl.Publish(topic, 0, false, []byte("")); token.Wait() && token.Error() != nil {
 		println(token.Error().Error())
 	}
-}
-
-func handleRaceStarting(client mqtt.Client, msg mqtt.Message) {
-	status = game.Starting
-}
-
-func handleRaceCountdown(client mqtt.Client, msg mqtt.Message) {
-	status = game.Countdown
 }
 
 func handleRaceStart(client mqtt.Client, msg mqtt.Message) {

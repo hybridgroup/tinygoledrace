@@ -33,7 +33,14 @@ var display = ili9341.NewParallel(
 // set this to the player to want to use
 var player = 1
 
-var oldSpeed int16
+var (
+	speed       int16
+	oldSpeed    int16
+	position    int16
+	oldPosition int16
+	laps        int16
+	oldLaps     int16
+)
 
 func main() {
 	time.Sleep(3 * time.Second)
