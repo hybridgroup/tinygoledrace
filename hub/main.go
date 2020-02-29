@@ -86,7 +86,7 @@ func racerJoin(msg mqtt.Message) {
 	// notify they are in the race
 	racerID := el[2]
 	racers[racerID] = &game.Racer{}
-	topic := strings.Replace(game.TopicRacerJoin, "+", racerID, 1)
+	topic := strings.Replace(game.TopicRaceJoined, "+", racerID, 1)
 	broker.Publish(topic, []byte{0})
 }
 
