@@ -84,6 +84,8 @@ func race() {
 
 	tapped := false
 	lr := false
+	rawspeed = 0
+
 	for {
 		if status != game.Start {
 			return
@@ -94,6 +96,8 @@ func race() {
 		if point.Z>>6 > 100 {
 			if !tapped {
 				tapped = true
+				rawspeed += game.Accelleration
+
 				// TAP event
 				tap()
 
@@ -109,6 +113,8 @@ func race() {
 		} else {
 			tapped = false
 		}
+
+		speed = int16(rawspeed)
 
 		// redraw controls here
 		if oldSpeed != speed {
@@ -128,6 +134,9 @@ func race() {
 			progressRaceBar(int16(laps))
 			oldLaps = laps
 		}
+
+		// handle friction
+		rawspeed -= rawspeed * game.Friction
 
 		time.Sleep(100 * time.Millisecond)
 	}

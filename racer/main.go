@@ -34,6 +34,7 @@ var display = ili9341.NewParallel(
 var player = 1
 
 var (
+	rawspeed    float32
 	speed       int16
 	oldSpeed    int16
 	position    int16

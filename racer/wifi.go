@@ -136,9 +136,9 @@ func failMessage(msg string) {
 }
 
 func tap() {
-	topic := strings.Replace(game.TopicRacerRacing, "+", "1", 1)
+	topic := strings.Replace(game.TopicRacerRacing, "+", strconv.Itoa(player), 1)
 
-	if token := cl.Publish(topic, 0, false, []byte(strconv.Itoa(1))); token.Wait() && token.Error() != nil {
+	if token := cl.Publish(topic, 0, false, []byte(strconv.Itoa(int(rawspeed)))); token.Wait() && token.Error() != nil {
 		println(token.Error().Error())
 	}
 }
@@ -146,7 +146,7 @@ func tap() {
 func heartbeat() {
 	for {
 		if status != game.Start {
-			topic := strings.Replace(game.TopicRacerAvailable, "+", "1", 1)
+			topic := strings.Replace(game.TopicRacerAvailable, "+", strconv.Itoa(player), 1)
 
 			if token := cl.Publish(topic, 0, false, []byte("available")); token.Wait() && token.Error() != nil {
 				println(token.Error().Error())
