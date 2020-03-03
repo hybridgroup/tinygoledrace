@@ -156,16 +156,42 @@ func handleDisplay() {
 
 	black := color.RGBA{1, 1, 1, 255}
 
+	msg := make([]byte, 7)
+	msg[0] = byte('r')
+	msg[2] = byte(':')
+	msg[3] = byte(' ')
 	for {
 		display.ClearBuffer()
 
-		r1 := strconv.Itoa(int(racer1.Pos))
-		r2 := strconv.Itoa(int(racer2.Pos))
-		msg := []byte("r1: " + r1)
+		msg[1] = 49 // "1"
+		msg[6] = 48 + uint8((racer1.Pos)%10)
+		if racer1.Pos > 9 {
+			msg[5] = 48 + uint8(((racer1.Pos)/10)%10)
+			if racer1.Pos > 99 {
+				msg[4] = 48 + uint8((racer1.Pos)/100)
+			} else {
+				msg[4] = 32
+			}
+		} else {
+			msg[5] = 32
+			msg[4] = 32
+		}
 		tinyfont.WriteLine(&display, &freemono.Bold9pt7b, 10, 20, msg, black)
 
-		msg2 := []byte("r2: " + r2)
-		tinyfont.WriteLine(&display, &freemono.Bold9pt7b, 10, 40, msg2, black)
+		msg[1] = 50 // "2"
+		msg[6] = 48 + uint8((racer2.Pos)%10)
+		if racer1.Pos > 9 {
+			msg[5] = 48 + uint8(((racer2.Pos)/10)%10)
+			if racer1.Pos > 99 {
+				msg[4] = 48 + uint8((racer2.Pos)/100)
+			} else {
+				msg[4] = 32
+			}
+		} else {
+			msg[5] = 32
+			msg[4] = 32
+		}
+		tinyfont.WriteLine(&display, &freemono.Bold9pt7b, 10, 40, msg, black)
 
 		display.Display()
 
